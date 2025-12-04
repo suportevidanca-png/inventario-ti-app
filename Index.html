@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventário de Ativos de TI - Gestão Minimalista</title>
+    <style>
+        /* ESTILOS CSS - Minimalista, Responsivo e com Cores */
+        :root {
+            --primary-color: #007bff; /* Azul para Ação Principal (Adicionar) */
+            --success-color: #28a745; /* Verde para Sucesso (Salvar/Editar) */
+            --danger-color: #dc3545;  /* Vermelho para Perigo (Deletar) */
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* ESTILOS DE BOTÕES E FORMULÁRIOS */
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+            color: white;
+        }
+
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-primary:hover { background-color: #0056b3; }
+
+        .btn-success { background-color: var(--success-color); }
+        .btn-success:hover { background-color: #1e7e34; }
+
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-danger:hover { background-color: #bd2130; }
+
+        .btn-edit { background-color: #ffc107; color: var(--text-color); }
+        .btn-edit:hover { background-color: #e0a800; }
+
+        /* Estilo para a área de filtros e botões */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Responsividade */
+            gap: 10px;
+        }
+
+        #filter-input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: var(--border-radius);
+            flex-grow: 1;
+            max-width: 400px;
+        }
+
+        /* ESTILOS DA TABELA */
+        .table-container {
+            overflow-x: auto; /* Garante scroll horizontal em telas pequenas */
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Garante que o conteúdo não fique muito apertado */
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* MODAL (Formulário Adicionar/Editar) */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none; /* Escondido por padrão */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .modal-content h2 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* ALERTAS */
+        #alert-message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            display: none;
+            font-weight: bold;
+        }
+
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        /* RESPONSIVIDADE PEQUENAS TELAS */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #filter-input {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Inventário de Ativos de TI 💻</h1>
+    </header>
+
+    <div class="container">
+        
+        <div id="alert-message" role="alert"></div>
+
+        <div class="controls">
+            <input type="text" id="filter-input" placeholder="🔍 Filtrar por ID, Nome, Localização ou Status..." onkeyup="filterTable()">
+            <button class="btn-primary" onclick="openModal('add')">➕ Adicionar Equipamento</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Categoria</th>
+                        <th>Nome</th>
+                        <th>Série</th>
+                        <th>Localização</th>
+                        <th>Responsável</th>
+                        <th>Aquisição</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-table-body">
+                    <tr><td colspan="9" style="text-align:center;">Carregando dados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="data-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title"></h2>
+            <form id="data-form">
+                <input type="hidden" id="modal-mode">
+                <input type="hidden" id="original-id"> 
+
+                <div class="form-group">
+                    <label for="id-ativo">ID do Ativo</label>
+                    <input type="text" id="id-ativo" required>
+                </div>
+                <div class="form-group">
+                    <label for="nome-equipamento">Nome do Equipamento</label>
+                    <input type="text" id="nome-equipamento" required>
+                </div>
+                <div class="form-group">
+                    <label for="localizacao-atual">Localização Atual</label>
+                    <input type="text" id="localizacao-atual" required>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" required>
+                        <option value="Em uso">Em uso</option>
+                        <option value="Em manutenção">Em manutenção</option>
+                        <option value="Em empréstimo">Em empréstimo</option>
+                        <option value="Desativado">Desativado</option>
+                        <option value="Disponível">Disponível</option>
+                    </select>
+                </div>
+                
+                <div id="additional-fields">
+                    <div class="form-group">
+                        <label for="categoria">Categoria</label>
+                        <input type="text" id="categoria">
+                    </div>
+                    <div class="form-group">
+                        <label for="numero-serie">Número de Série/IMEI</label>
+                        <input type="text" id="numero-serie">
+                    </div>
+                    <div class="form-group">
+                        <label for="responsavel">Responsável</label>
+                        <input type="text" id="responsavel">
+                    </div>
+                    <div class="form-group">
+                        <label for="data-aquisicao">Data de Aquisição</label>
+                        <input type="date" id="data-aquisicao">
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-primary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-success" id="submit-btn">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ IMPORTANTE: Substitua pela sua URL real do Apps Script
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzh3P1mrxaDXc_DywbB0TneRMM1ZHrudgjbS8gxkYF-2hiXsIcaxsXLDvvzlK8-S9H4yg/exec";
+
+        let inventoryData = []; // Armazena os dados atuais
+
+        // -------------------------------------------------------------------
+        // FUNÇÕES GERAIS E DE UTILIDADE
+        // -------------------------------------------------------------------
+
+        /**
+         * Exibe uma mensagem de feedback na tela.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {string} type - 'success' ou 'error'.
+         */
+        function showAlert(message, type) {
+            const alertElement = document.getElementById('alert-message');
+            alertElement.textContent = message;
+            alertElement.className = type === 'success' ? 'alert-success' : 'alert-error';
+            alertElement.style.display = 'block';
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+        }
+
+        /**
+         * Função principal de comunicação com o Apps Script.
+         * @param {string} action - 'read', 'add', 'update', ou 'delete'.
+         * @param {Object} data - Dados a serem enviados (apenas para POST).
+         */
+        async function sendRequest(action, data = null) {
+            const url = action === 'read' ? `${APPS_SCRIPT_URL}?action=read` : APPS_SCRIPT_URL;
+            const options = action === 'read' ? { method: 'GET' } : {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: JSON.stringify({ action: action, data: data })
+            };
+
+            try {
+                const response = await fetch(url, options);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Trata as ações de escrita/atualização/deleção
+                    if (action !== 'read') {
+                        showAlert(result.message, 'success');
+                        await loadInventory(); // Recarrega os dados após a modificação
+                    }
+                    return result;
+                } else {
+                    showAlert(result.message || 'Erro desconhecido na requisição.', 'error');
+                    return { status: 'error', message: result.message };
+                }
+            } catch (error) {
+                showAlert('Erro de comunicação: Não foi possível conectar ao servidor.', 'error');
+                console.error('Erro de requisição:', error);
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        // -------------------------------------------------------------------
+        // FUNÇÕES CRUD (CREATE, READ, UPDATE, DELETE)
+        // -------------------------------------------------------------------
+
+        /**
+         * READ: Carrega todos os dados do inventário e renderiza a tabela.
+         */
+        async function loadInventory() {
+            const tableBody = document.getElementById('inventory-table-body');
+            tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Carregando dados...</td></tr>';
+            
+            const result = await sendRequest('read');
+            
+            if (result.status === 'success') {
+                inventoryData = result.data;
+                renderTable(inventoryData);
+            } else {
+                tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center; color: var(--danger-color);">${result.message || 'Falha ao carregar dados.'}</td></tr>`;
+            }
+        }
+
+        /**
+         * Renderiza as linhas da tabela com os dados fornecidos.
+         * @param {Array} data - Lista de objetos de equipamentos.
+         */
+        function renderTable(data) {
+            const tableBody = document.getElementById('inventory-table-body');
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum equipamento encontrado.</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                
+                // Função para obter o valor de forma segura, garantindo que não seja undefined
+                const getValue = (key) => item[key] || ''; 
+                
+                row.innerHTML = `
+                    <td>${getValue('ID do Ativo')}</td>
+                    <td>${getValue('Categoria')}</td>
+                    <td>${getValue('Nome do Equipamento')}</td>
+                    <td>${getValue('Número de Série/IMEI')}</td>
+                    <td>${getValue('Localização Atual')}</td>
+                    <td>${getValue('Responsável')}</td>
+                    <td>${getValue('Data de Aquisição')}</td>
+                    <td><span style="font-weight: bold; color: ${getStatusColor(getValue('Status'))}">${getValue('Status')}</span></td>
+                    <td>
+                        <button class="btn-edit" onclick="openModal('edit', '${getValue('ID do Ativo')}')">Editar</button>
+                        <button class="btn-danger" onclick="deleteEquipment('${getValue('ID do Ativo')}')">Deletar</button>
+                    </td>
+                `;
+            });
+        }
+        
+        /**
+         * Obtém a cor para o status.
+         */
+        function getStatusColor(status) {
+            switch (status) {
+                case 'Em uso': return 'var(--success-color)';
+                case 'Em manutenção': return '#ffc107'; // Amarelo
+                case 'Desativado': return 'var(--danger-color)';
+                default: return 'var(--primary-color)';
+            }
+        }
+
+        // -------------------------------------------------------------------
+        // FUNÇÕES DO MODAL (ADICIONAR/EDITAR)
+        // -------------------------------------------------------------------
+
+        /**
+         * Abre o modal no modo Adicionar ou Editar.
+         * @param {string} mode - 'add' ou 'edit'.
+         * @param {string} id - O ID do ativo para edição (opcional).
+         */
+        function openModal(mode, id = null) {
+            const modal = document.getElementById('data-modal');
+            const form = document.getElementById('data-form');
+            const additionalFields = document.getElementById('additional-fields');
+            const modalTitle = document.getElementById('modal-title');
+            
+            document.getElementById('modal-mode').value = mode;
+            form.reset(); // Limpa o formulário
+
+            if (mode === 'add') {
+                modalTitle.textContent = "➕ Novo Equipamento";
+                additionalFields.style.display = 'block'; // Mostrar todos os campos
+                document.getElementById('id-ativo').disabled = false;
+                document.getElementById('original-id').value = '';
+            } else { // 'edit'
+                modalTitle.textContent = "✍️ Editar Equipamento";
+                additionalFields.style.display = 'none'; // Esconder campos que não serão editados (pode ser ajustado)
+                document.getElementById('id-ativo').disabled = true; // Não permite alterar o ID
+                document.getElementById('original-id').value = id;
+                
+                // Preenche o formulário com os dados atuais
+                const item = inventoryData.find(d => d['ID do Ativo'] === id);
+                if (item) {
+                    document.getElementById('id-ativo').value = item['ID do Ativo'] || '';
+                    document.getElementById('nome-equipamento').value = item['Nome do Equipamento'] || '';
+                    document.getElementById('localizacao-atual').value = item['Localização Atual'] || '';
+                    document.getElementById('status').value = item['Status'] || 'Em uso';
+                    // Nota: outros campos como Categoria, Série etc. não são essenciais para atualização
+                }
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        /**
+         * Fecha o modal.
+         */
+        function closeModal() {
+            document.getElementById('data-modal').style.display = 'none';
+        }
+
+        // Listener para submissão do formulário
+        document.getElementById('data-form').addEventListener('submit', handleFormSubmit);
+
+        /**
+         * Lida com a submissão do formulário, decidindo se é Adicionar ou Editar.
+         */
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const mode = document.getElementById('modal-mode').value;
+            const form = document.getElementById('data-form');
+            const formData = {};
+
+            // Mapeia os dados do formulário para as chaves exatas do cabeçalho da Planilha
+            formData['ID do Ativo'] = form.elements['id-ativo'].value;
+            formData['Nome do Equipamento'] = form.elements['nome-equipamento'].value;
+            formData['Localização Atual'] = form.elements['localizacao-atual'].value;
+            formData['Status'] = form.elements['status'].value;
+
+            // Para o modo 'add', inclua os campos adicionais
+            if (mode === 'add') {
+                formData['Categoria'] = form.elements['categoria'].value;
+                formData['Número de Série/IMEI'] = form.elements['numero-serie'].value;
+                formData['Responsável'] = form.elements['responsavel'].value;
+                formData['Data de Aquisição'] = form.elements['data-aquisicao'].value;
+            }
+
+            if (mode === 'add') {
+                await sendRequest('add', formData);
+            } else if (mode === 'edit') {
+                // Para edição, só enviamos o ID, Status e Localização.
+                // O Apps Script só foi configurado para atualizar Localização e Status.
+                const updateData = {
+                    'ID do Ativo': document.getElementById('original-id').value,
+                    'Status': formData['Status'],
+                    'Localização Atual': formData['Localização Atual']
+                };
+                await sendRequest('update', updateData);
+            }
+
+            closeModal();
+        }
+
+        /**
+         * DELETE: Confirma e envia requisição para deletar um equipamento.
+         * NOTA: A função de DELETAR *não* foi implementada no seu Apps Script.
+         * Este é apenas um placeholder para o frontend.
+         */
+        function deleteEquipment(id) {
+            alert("Aviso: A função 'Deletar' não foi implementada no Apps Script (backend). Se desejar que ela funcione, você precisará adicionar um manipulador 'delete' no Apps Script!");
+            // Se você adicionar a função no Apps Script:
+            // if (confirm(`Tem certeza que deseja DELETAR o ativo ID: ${id}?`)) {
+            //     sendRequest('delete', { 'ID do Ativo': id }); 
+            // }
+        }
+
+        // -------------------------------------------------------------------
+        // FUNÇÃO DE FILTRO
+        // -------------------------------------------------------------------
+        
+        /**
+         * Filtra os dados da tabela com base no texto de entrada.
+         */
+        function filterTable() {
+            const input = document.getElementById('filter-input');
+            const filter = input.value.toUpperCase();
+            
+            // Filtra os dados originais
+            const filteredData = inventoryData.filter(item => {
+                // Combina os valores das colunas relevantes em uma string para busca
+                const searchableText = `${item['ID do Ativo']} ${item['Nome do Equipamento']} ${item['Localização Atual']} ${item['Status']}`.toUpperCase();
+                return searchableText.includes(filter);
+            });
+            
+            renderTable(filteredData);
+        }
+
+
+        // Inicializa o carregamento dos dados quando a página carrega
+        window.onload = loadInventory;
+        
+        // Permite fechar o modal clicando fora dele
+        window.onclick = function(event) {
+            const modal = document.getElementById('data-modal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+    </script>
+</body>
+</html>
